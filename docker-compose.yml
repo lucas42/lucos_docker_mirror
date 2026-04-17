@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: registry.Dockerfile
-    image: lucas42/lucos_docker_mirror_registry:${VERSION}
+    image: lucas42/lucos_docker_mirror_registry:${VERSION:-latest}
     container_name: lucos_docker_mirror_registry
     environment:
       - REGISTRY_PROXY_PASSWORD
@@ -19,7 +19,7 @@ services:
   info:
     build:
       context: ./info
-    image: lucas42/lucos_docker_mirror_info:${VERSION}
+    image: lucas42/lucos_docker_mirror_info:${VERSION:-latest}
     container_name: lucos_docker_mirror_info
     environment:
       - SYSTEM
@@ -35,7 +35,7 @@ services:
 
   web:
     build: .
-    image: lucas42/lucos_docker_mirror_web:${VERSION}
+    image: lucas42/lucos_docker_mirror_web:${VERSION:-latest}
     container_name: lucos_docker_mirror_web
     environment:
       - PORT
