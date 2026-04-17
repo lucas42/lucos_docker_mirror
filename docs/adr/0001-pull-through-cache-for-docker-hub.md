@@ -44,7 +44,7 @@ A pull-through cache, unlike a curated store, fetches on demand. On cache miss i
 
 ### Consumption
 
-CI clients consume the mirror via BuildKit's `registry-mirrors` configuration, which accepts a custom mirror host for `docker.io`. `registry:2` preserves Docker Hub's path layout (`/v2/library/node/manifests/25-alpine`), so clients can point at `mirror.l42.eu` without changes to image references anywhere.
+CI clients consume the mirror via BuildKit's `registry-mirrors` configuration, which accepts a custom mirror host for `docker.io`. `registry:2` preserves Docker Hub's path layout (`/v2/library/node/manifests/25-alpine`), so clients can point at `docker.l42.eu` without changes to image references anywhere.
 
 This means:
 
@@ -56,7 +56,7 @@ This means:
 
 - **Service repo**: `lucas42/lucos_docker_mirror` (this repo) — follows the one-service-per-repo convention.
 - **Host**: avalon.
-- **Domain**: `mirror.l42.eu`, routed via `lucos_router` using the existing TLS/routing pattern. TLS certs via the shared `lucos_router_letsencrypt` volume.
+- **Domain**: `docker.l42.eu`, routed via `lucos_router` using the existing TLS/routing pattern. TLS certs via the shared `lucos_router_letsencrypt` volume.
 - **Client auth**: htpasswd-based. A token stored in `lucos_creds` is presented by CI and by any other authorised client. The mirror is on the public internet (there is no internal trusted network in the lucos topology — see `references/network-topology.md`) so requiring auth is load-bearing, not defence-in-depth.
 - **Upstream auth**: a Docker Hub personal access token for the `lucas42` account, stored in `lucos_creds`, used by `registry:2` to make authenticated pulls upstream. This is the token against which the 200/6h budget is counted — but because the mirror caches, the budget is only consumed on cache miss (i.e. once per new distinct tag), not on every build.
 - **Storage**: a named Docker volume `lucos_docker_mirror_cache`, declared in this repo's `docker-compose.yml` and registered in `lucos_configy/config/volumes.yaml`. Backup policy TBD during implementation — a cache volume is rebuildable from Docker Hub, so backups may be unnecessary.
