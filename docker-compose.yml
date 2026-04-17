@@ -1,19 +1,12 @@
 services:
   registry:
-    image: registry:2
+    build:
+      context: .
+      dockerfile: registry.Dockerfile
+    image: lucas42/lucos_docker_mirror_registry:${VERSION}
     container_name: lucos_docker_mirror_registry
     environment:
-      - REGISTRY_LOG_LEVEL=warn
-      - REGISTRY_HTTP_ADDR=:5000
-      - REGISTRY_PROXY_REMOTEURL=https://registry-1.docker.io
-      - REGISTRY_PROXY_USERNAME=lucas42
       - REGISTRY_PROXY_PASSWORD
-      - REGISTRY_PROXY_TTL=168h
-      - REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY=/var/lib/registry
-      - REGISTRY_STORAGE_MAINTENANCE_UPLOADPURGING_ENABLED=true
-      - REGISTRY_STORAGE_MAINTENANCE_UPLOADPURGING_AGE=168h
-      - REGISTRY_STORAGE_MAINTENANCE_UPLOADPURGING_INTERVAL=24h
-      - REGISTRY_STORAGE_MAINTENANCE_UPLOADPURGING_DRYRUN=false
     volumes:
       - cache:/var/lib/registry
     restart: always
