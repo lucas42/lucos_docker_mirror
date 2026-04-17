@@ -74,6 +74,12 @@ Switch sync gunicorn workers to gthread (`-k gthread --threads 32 -w 2`), raise 
 
 Rejected as the end state (but explicitly kept available as a rollback position — see Reversibility). The tactical fix silences the symptom without addressing the mismatch: Python remains on the data-plane hot path, the Dependabot surface stays disproportionate to the responsibility, the two-worker concurrency cap remains, and the first future scaling pressure point rediscovers the same problem from a different angle. We already pay for the tactical fix once in this incident; paying for it again in six months is avoidable.
 
+### Async Python (uvicorn + ASGI framework with `httpx` streaming)
+
+Replace sync gunicorn workers with an ASGI server (uvicorn) and a framework supporting genuine async request/response streaming (FastAPI, Starlette, or aiohttp) alongside a streaming HTTP client (`httpx` in async mode). Distinct from the gthread tactical fix above: async Python would resolve both the concurrency cap *and* the request-body streaming problem while remaining in-language, and would not rely on thread-pool sizing to work around a framework that was never streaming-shaped to begin with.
+
+Rejected: Python remains on the data-plane hot path, and the dependency tree stays disproportionate to the responsibility — an ASGI runtime, an HTTP framework, an async HTTP client, and their transitive deps, in service of a role nginx fulfils in its default config with zero application code. The rewrite effort would also be comparable to introducing nginx (the current `app.py` is not trivially asyncifiable — `requests` would be swapped for `httpx.AsyncClient`, the proxy handler re-expressed against ASGI's `receive`/`send`, and gunicorn replaced with uvicorn). At similar implementation cost we should take the architecturally correct answer, not a better Python.
+
 ### OpenResty (nginx + Lua) for `/_info` synthesis
 
 Write the three checks in Lua and execute them in-nginx. Architecturally elegant — one container, one runtime, no Python on the hot path or anywhere else. Rejected because it introduces a non-stock nginx build to the estate for a single endpoint on a single service, and OpenResty is not currently used anywhere in lucos. The operational and review cost (a new runtime that no other team member has worked with) exceeds the benefit of eliminating the small sidecar.
@@ -125,6 +131,6 @@ These are orientation notes for whoever picks up the implementation; the authori
 ## References
 
 - ADR-0001 (this repo) — the pull-through cache decision that introduced this service.
-- lucas42/lucos_docker_mirror#[implementation issue number, to be filled in at merge time] — tracking issue for this ADR.
+- lucas42/lucos_docker_mirror#22 — tracking issue for this ADR.
 - nginx `proxy_pass` streaming behaviour: https://nginx.org/en/docs/http/ngx_http_proxy_module.html (in particular `proxy_buffering`, `proxy_request_buffering`, `client_max_body_size`).
 - gunicorn worker types and `--timeout` semantics: https://docs.gunicorn.org/en/stable/settings.html#timeout (for the record of what the 30s sync-worker timeout actually means, given the confusion the incident caused).
