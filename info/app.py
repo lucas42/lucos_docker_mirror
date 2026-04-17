@@ -1,6 +1,6 @@
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from flask import Flask, request, Response
+from flask import Flask
 import requests as req
 
 app = Flask(__name__)
@@ -69,49 +69,5 @@ def info():
     }
 
 
-def _check_auth():
-    auth = request.authorization
-    if not auth:
-        return False
-    expected_user = _env("REGISTRY_CLIENT_USERNAME")
-    expected_pass = _env("REGISTRY_CLIENT_PASSWORD")
-    if not expected_user or not expected_pass:
-        return True
-    return auth.username == expected_user and auth.password == expected_pass
-
-
-@app.route("/", defaults={"path": ""}, methods=["GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"])
-@app.route("/<path:path>", methods=["GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"])
-def proxy(path):
-    if not _check_auth():
-        return Response(
-            "Unauthorized",
-            status=401,
-            headers={"WWW-Authenticate": 'Basic realm="lucos-docker-mirror"'},
-            content_type="text/plain",
-        )
-
-    url = f"{REGISTRY_URL}/{path}"
-    headers = {k: v for k, v in request.headers if k.lower() not in ("host", "content-length", "authorization")}
-    upstream = req.request(
-        method=request.method,
-        url=url,
-        headers=headers,
-        data=request.get_data(),
-        params=request.args,
-        stream=True,
-        timeout=60,
-        allow_redirects=False,
-    )
-    excluded = {"content-encoding", "transfer-encoding", "connection"}
-    response_headers = [(k, v) for k, v in upstream.headers.items() if k.lower() not in excluded]
-    return Response(
-        upstream.iter_content(chunk_size=8192),
-        status=upstream.status_code,
-        headers=response_headers,
-    )
-
-
 if __name__ == "__main__":
-    port = int(_env("PORT", "8080"))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=8000)
