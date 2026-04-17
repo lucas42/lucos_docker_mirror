@@ -6,7 +6,7 @@ services:
       - REGISTRY_PROXY_PASSWORD
     volumes:
       - ./config.yml:/etc/docker/registry/config.yml:ro
-      - lucos_docker_mirror_cache:/var/lib/registry
+      - cache:/var/lib/registry
     restart: always
 
   web:
@@ -22,7 +22,7 @@ services:
     ports:
       - "${PORT}:${PORT}"
     volumes:
-      - lucos_docker_mirror_cache:/var/lib/registry:ro
+      - cache:/var/lib/registry:ro
     depends_on:
       - registry
     restart: always
@@ -33,4 +33,4 @@ services:
       retries: 3
 
 volumes:
-  lucos_docker_mirror_cache:
+  cache:
