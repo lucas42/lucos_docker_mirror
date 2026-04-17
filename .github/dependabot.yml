@@ -4,16 +4,34 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    dependency-type: "all"
+    allow:
+      - dependency-type: all
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+      major:
+        update-types: [major]
 
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "weekly"
-    dependency-type: "all"
+    allow:
+      - dependency-type: all
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+      major:
+        update-types: [major]
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
-    dependency-type: "all"
+    allow:
+      - dependency-type: all
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+      major:
+        update-types: [major]
