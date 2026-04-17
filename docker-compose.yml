@@ -1,0 +1,36 @@
+services:
+  registry:
+    image: registry:2
+    container_name: lucos_docker_mirror_registry
+    environment:
+      - REGISTRY_PROXY_PASSWORD
+    volumes:
+      - ./config.yml:/etc/docker/registry/config.yml:ro
+      - lucos_docker_mirror_cache:/var/lib/registry
+    restart: always
+
+  web:
+    build: .
+    image: lucas42/lucos_docker_mirror_web:${VERSION}
+    container_name: lucos_docker_mirror_web
+    environment:
+      - PORT
+      - SYSTEM
+      - ENVIRONMENT
+      - REGISTRY_CLIENT_USERNAME
+      - REGISTRY_CLIENT_PASSWORD
+    ports:
+      - "${PORT}:${PORT}"
+    volumes:
+      - lucos_docker_mirror_cache:/var/lib/registry:ro
+    depends_on:
+      - registry
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:${PORT}/_info"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  lucos_docker_mirror_cache:
