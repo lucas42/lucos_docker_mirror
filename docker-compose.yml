@@ -16,22 +16,37 @@ services:
       timeout: 10s
       retries: 3
 
+  info:
+    build:
+      context: ./info
+    image: lucas42/lucos_docker_mirror_info:${VERSION}
+    container_name: lucos_docker_mirror_info
+    environment:
+      - SYSTEM
+      - ENVIRONMENT
+    volumes:
+      - cache:/var/lib/registry:ro
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8000/_info"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   web:
     build: .
     image: lucas42/lucos_docker_mirror_web:${VERSION}
     container_name: lucos_docker_mirror_web
     environment:
       - PORT
-      - SYSTEM
-      - ENVIRONMENT
       - REGISTRY_CLIENT_USERNAME
       - REGISTRY_CLIENT_PASSWORD
     ports:
       - "${PORT}:${PORT}"
-    volumes:
-      - cache:/var/lib/registry:ro
     depends_on:
       registry:
+        condition: service_healthy
+      info:
         condition: service_healthy
     restart: always
     healthcheck:
