@@ -18,6 +18,12 @@ updates:
       interval: "weekly"
     allow:
       - dependency-type: all
+    ignore:
+      # registry:3 (distribution v3) breaks pull-through proxy for OCI index
+      # child manifests — serves cached index but 404s on digest lookups for
+      # children not yet fetched. See lucos_docker_mirror#35.
+      - dependency-name: "registry"
+        update-types: ["version-update:semver-major"]
     groups:
       minor-and-patch:
         update-types: [minor, patch]
