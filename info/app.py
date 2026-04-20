@@ -1,5 +1,5 @@
 import os
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError
 from flask import Flask
 import requests as req
 
@@ -54,12 +54,17 @@ def info():
     check_fns = {"registry": _check_registry, "upstream": _check_upstream, "disk": _check_disk}
     with ThreadPoolExecutor(max_workers=3) as ex:
         futures = {ex.submit(fn): name for name, fn in check_fns.items()}
-        for future in as_completed(futures, timeout=0.9):
-            name = futures[future]
-            try:
-                checks[name] = future.result()
-            except Exception as e:
-                checks[name] = {"ok": False, "techDetail": str(e)}
+        try:
+            for future in as_completed(futures, timeout=0.9):
+                name = futures[future]
+                try:
+                    checks[name] = future.result()
+                except Exception as e:
+                    checks[name] = {"ok": False, "techDetail": str(e)}
+        except TimeoutError:
+            for future, name in futures.items():
+                if name not in checks:
+                    checks[name] = {"ok": False, "techDetail": "check timed out"}
     return {
         "system": _env("SYSTEM", "lucos_docker_mirror"),
         "checks": checks,
