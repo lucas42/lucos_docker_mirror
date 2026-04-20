@@ -1,0 +1,16 @@
+version: 0.1
+log:
+  level: warn
+http:
+  addr: :5000
+proxy:
+  remoteurl: https://registry-1.docker.io
+storage:
+  filesystem:
+    rootdirectory: /var/lib/registry
+  maintenance:
+    uploadpurging:
+      enabled: true
+      age: 168h
+      interval: 24h
+      dryrun: false

@@ -1,4 +1,5 @@
 FROM registry:2
 ARG VERSION
 ENV VERSION=$VERSION
-COPY config.yml /etc/docker/registry/config.yml
+ARG CONFIG_FILE=config.yml
+COPY ${CONFIG_FILE} /etc/docker/registry/config.yml
