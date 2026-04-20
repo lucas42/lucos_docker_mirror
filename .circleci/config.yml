@@ -1,15 +1,61 @@
 version: 2.1
 orbs:
   lucos: lucos/deploy@0
+jobs:
+  test-proxy:
+    docker:
+      - image: cimg/base:current
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Build registry image (anonymous upstream credentials)
+          command: docker build -f registry.Dockerfile --build-arg CONFIG_FILE=config.test.yml -t registry-test .
+      - run:
+          name: Start registry and helper containers
+          command: |
+            docker network create mirror-net
+            docker run -d --name registry-test --network mirror-net registry-test
+            docker run -d --name helper --network mirror-net alpine:3 sleep 300
+            docker exec helper apk add -q --no-cache curl
+      - run:
+          name: Smoke test - OCI multi-platform pull-through
+          command: |
+            docker exec helper sh -c '
+              TRIES=0
+              until curl -sf http://registry-test:5000/v2/ > /dev/null 2>&1; do
+                TRIES=$((TRIES + 1))
+                [ $TRIES -lt 30 ] || { echo "ERROR: Registry not ready after 60s"; exit 1; }
+                sleep 2
+              done
+              echo "Registry ready"
+              RESPONSE=$(curl -sf \
+                -H "Accept: application/vnd.oci.image.index.v1+json,application/vnd.docker.distribution.manifest.list.v2+json" \
+                http://registry-test:5000/v2/library/alpine/manifests/3)
+              echo "$RESPONSE" | grep -q "\"manifests\"" || { echo "ERROR: No manifests key in OCI index"; exit 1; }
+              echo "OCI manifest index OK"
+              DIGEST=$(echo "$RESPONSE" | grep -o "sha256:[a-f0-9]\{64\}" | head -1)
+              [ -n "$DIGEST" ] || { echo "ERROR: Could not extract child digest from index"; exit 1; }
+              echo "Testing child manifest: $DIGEST"
+              STATUS=$(curl -so /dev/null -w "%{http_code}" \
+                -H "Accept: application/vnd.oci.image.manifest.v1+json,application/vnd.docker.distribution.manifest.v2+json" \
+                "http://registry-test:5000/v2/library/alpine/manifests/$DIGEST")
+              echo "Child manifest HTTP $STATUS"
+              [ "$STATUS" = "200" ] || { echo "ERROR: Expected HTTP 200 for child manifest, got $STATUS"; exit 1; }
+              echo "PASS: OCI multi-platform pull-through works"
+            '
 workflows:
   version: 2
   build-deploy:
     jobs:
+      - test-proxy
       - lucos/build-multiplatform:
           serial-group: << pipeline.project.slug >>/build
       - lucos/deploy-avalon:
           serial-group: << pipeline.project.slug >>/deploy-avalon
           requires:
+            - test-proxy
             - lucos/build-multiplatform
           filters:
             branches:
