@@ -9,7 +9,7 @@ services:
       - REGISTRY_PROXY_PASSWORD
     volumes:
       - cache:/var/lib/registry
-    mem_limit: 512m
+    mem_limit: 1g
     restart: always
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "-O", "/dev/null", "http://127.0.0.1:5000/v2/"]
