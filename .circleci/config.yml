@@ -50,13 +50,14 @@ workflows:
   build-deploy:
     jobs:
       - test-proxy
-      - lucos/build-multiplatform:
+      - lucos/build:
+          platform: "linux/amd64,linux/arm64"
           serial-group: << pipeline.project.slug >>/build
       - lucos/deploy-avalon:
-          serial-group: << pipeline.project.slug >>/deploy-avalon
+          serial-group: deploy-avalon
           requires:
             - test-proxy
-            - lucos/build-multiplatform
+            - lucos/build
           filters:
             branches:
               only:
