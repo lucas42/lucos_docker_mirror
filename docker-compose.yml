@@ -27,6 +27,7 @@ services:
       - ENVIRONMENT
     volumes:
       - cache:/var/lib/registry:ro
+      - logs:/var/log/nginx:ro
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8000/_info"]
@@ -44,6 +45,8 @@ services:
       - REGISTRY_CLIENT_PASSWORD
     ports:
       - "${PORT}:${PORT}"
+    volumes:
+      - logs:/var/log/nginx
     depends_on:
       registry:
         condition: service_healthy
@@ -58,3 +61,4 @@ services:
 
 volumes:
   cache:
+  logs:
