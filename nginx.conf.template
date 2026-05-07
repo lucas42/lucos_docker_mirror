@@ -1,6 +1,9 @@
 events {}
 
 http {
+    log_format timed '$msec "$request" $status';
+    access_log /var/log/nginx/access.log timed;
+
     server {
         listen ${PORT};
 
