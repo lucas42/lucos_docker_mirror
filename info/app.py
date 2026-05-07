@@ -1,4 +1,5 @@
 import os
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError
 from flask import Flask
 import requests as req
@@ -7,6 +8,8 @@ app = Flask(__name__)
 
 REGISTRY_URL = "http://registry:5000"
 CACHE_PATH = "/var/lib/registry"
+LOG_PATH = "/var/log/nginx/access.log"
+PULL_WINDOW_SECONDS = 300  # 5 minutes
 
 
 def _env(key, default=""):
@@ -48,6 +51,33 @@ def _check_disk():
         return {"ok": False, "techDetail": str(e)}
 
 
+def _metric_pull_rate():
+    """Count blob GET requests served in the last 5 minutes from the nginx access log.
+
+    Log format (set in nginx.conf.template): '<msec> "<method> <path> <proto>" <status>'
+    Returns 0 if the log is absent or unreadable (e.g. on first start).
+    """
+    cutoff = time.time() - PULL_WINDOW_SECONDS
+    count = 0
+    try:
+        with open(LOG_PATH) as f:
+            for line in f:
+                parts = line.split(" ", 1)
+                if len(parts) < 2:
+                    continue
+                try:
+                    ts = float(parts[0])
+                except ValueError:
+                    continue
+                if ts < cutoff:
+                    continue
+                if '"GET /v2/' in parts[1] and "/blobs/" in parts[1]:
+                    count += 1
+    except (FileNotFoundError, OSError):
+        return 0
+    return count
+
+
 @app.get("/_info")
 def info():
     checks = {}
@@ -68,7 +98,7 @@ def info():
     return {
         "system": _env("SYSTEM", "lucos_docker_mirror"),
         "checks": checks,
-        "metrics": {},
+        "metrics": {"docker_mirror_pull_count": _metric_pull_rate()},
         "ci": {"circle": "gh/lucas42/lucos_docker_mirror"},
         "title": "Docker Mirror",
     }
