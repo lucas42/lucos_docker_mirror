@@ -103,7 +103,7 @@ def info():
     return {
         "system": _env("SYSTEM", "lucos_docker_mirror"),
         "checks": checks,
-        "metrics": {"docker_mirror_pull_count": _metric_pull_rate()},
+        "metrics": {"docker_mirror_pull_count": {"value": _metric_pull_rate(), "techDetail": "Number of blob pulls served by the mirror in the last 5 minutes (canary for daemon bypass)"}},
         "ci": {"circle": "gh/lucas42/lucos_docker_mirror"},
         "title": "Docker Mirror",
     }
