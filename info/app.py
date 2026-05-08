@@ -39,9 +39,9 @@ def _check_upstream():
 
 def _check_disk():
     try:
-        stat = os.statvfs(CACHE_PATH)
-        total = stat.f_blocks * stat.f_frsize
-        available = stat.f_bavail * stat.f_frsize
+        vfs_stat = os.statvfs(CACHE_PATH)
+        total = vfs_stat.f_blocks * vfs_stat.f_frsize
+        available = vfs_stat.f_bavail * vfs_stat.f_frsize
         used_pct = (1 - available / total) * 100 if total > 0 else 0
         used_gb = (total - available) / (1024 ** 3)
         detail = f"{used_pct:.0f}% used ({used_gb:.1f} GB)"
