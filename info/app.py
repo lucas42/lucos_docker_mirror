@@ -100,6 +100,9 @@ def info():
             for future, name in futures.items():
                 if name not in checks:
                     checks[name] = {"ok": False, "techDetail": "check timed out"}
+    for check_name in ("upstream", "registry"):
+        if check_name in checks:
+            checks[check_name]["failThreshold"] = 2
     return {
         "system": _env("SYSTEM", "lucos_docker_mirror"),
         "checks": checks,
