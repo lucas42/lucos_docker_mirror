@@ -100,7 +100,7 @@ def info():
             for future, name in futures.items():
                 if name not in checks:
                     checks[name] = {"ok": False, "techDetail": "check timed out"}
-    for check_name, threshold in {"upstream": 3, "registry": 2}.items():
+    for check_name, threshold in {"upstream": 3, "registry": 3}.items():
         if check_name in checks:
             checks[check_name]["failThreshold"] = threshold
     return {
