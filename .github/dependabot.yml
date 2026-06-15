@@ -36,12 +36,6 @@ updates:
       interval: "weekly"
     allow:
       - dependency-type: all
-    ignore:
-      - dependency-name: "python"
-        versions:
-          - "*.pre.alpine.a"   # alpha (e.g. 3.15.0a2-alpine)
-          - "*.pre.alpine.b"   # beta  (e.g. 3.15.0b2-alpine)
-          - "*.pre.alpine.rc*" # rc    (e.g. 3.15.0rc1-alpine)
     groups:
       minor-and-patch:
         update-types: [minor, patch]
