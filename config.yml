@@ -6,6 +6,7 @@ http:
 proxy:
   remoteurl: https://registry-1.docker.io
   username: lucas42
+  ttl: 0
 storage:
   filesystem:
     rootdirectory: /var/lib/registry
